@@ -1,0 +1,10 @@
+catboost>=0.17
+category_encoders
+lightgbm
+matplotlib
+numpy
+optuna>=1.0.0
+pandas
+seaborn
+scikit-learn
+tqdm
