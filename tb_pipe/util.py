@@ -3,6 +3,7 @@ import os
 import random
 import time
 from contextlib import contextmanager
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -26,21 +27,32 @@ def seed_everything(seed: int = 1234):
 
 
 @contextmanager
-def timer(name: str):
+def timer(name: str, logger: Optional[logging.RootLogger] = None,
+          level: int = logging.DEBUG):
     """
 
     Args:
         name (str):
+        logger (logging.RootLogger or None):
+        level (int):
 
     Returns:
+        None:
 
     References:
+        https://qiita.com/kaggle_master-arai-san/items/d59b2fb7142ec7e270a5
+
+    Examples:
+        >>> import numpy as np
+        >>> with timer("exp"): data = np.arange(10)
+        [exp] done in 0 s
 
     """
     t0 = time.time()
-    print(f'[{name}] start')
     yield
-    print(f'[{name}] done in {time.time() - t0:.0f} s')
+    msg = f"[{name}] done in {time.time() - t0:.0f} s"
+    print_ = print if logger is None else lambda _msg: logger.log(level, _msg)
+    print_(msg)
 
 
 def reduce_mem_usage(df: pd.DataFrame, logger: logging.RootLogger = None,
