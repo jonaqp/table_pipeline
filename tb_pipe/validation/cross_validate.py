@@ -15,12 +15,14 @@ class CrossValidator:
         self.model = model
 
     def run(self, train: TYPE_DATASET, test: TYPE_DATASET,
-            target: TYPE_DATASET):
+            target: TYPE_DATASET, verbose: bool = True):
         self.oof = np.zeros(len(train))
         self.predictions = np.zeros(len(test))
 
-        for fold_idx, (trn_idx, val_idx) in enumerate(
-            self.cv.split(train, target)):
-            print('Fold {}/{}'.format(fold_idx + 1, self.cv.n_splits))
+        for idx, (trn_idx, val_idx) in enumerate(self.cv.split(train, target)):
+            if verbose:
+                print('Fold: {}/{}'.format(idx + 1, self.cv.n_splits))
+                print('Length train: {} / valid: {}'.format(len(trn_idx),
+                                                            len(val_idx)))
             train_x, train_y = train.iloc[trn_idx], target.iloc[trn_idx]
             valid_x, valid_y = train.iloc[val_idx], target.iloc[val_idx]
