@@ -18,5 +18,6 @@ setup(
     license=LICENSE,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    install_requires=INSTALL_REQUIRED
+    install_requires=INSTALL_REQUIRED,
+    tests_require=["pytest"]
 )
