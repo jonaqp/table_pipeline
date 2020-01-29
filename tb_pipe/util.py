@@ -1,7 +1,46 @@
 import logging
+import os
+import random
+import time
+from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
+
+
+def seed_everything(seed: int = 1234):
+    """ set everything seed
+
+    Args:
+        seed (int): random value
+
+    Returns:
+        None:
+
+    References:
+        https://www.kaggle.com/bminixhofer/deterministic-neural-networks-using-pytorch
+    """
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+
+
+@contextmanager
+def timer(name: str):
+    """
+
+    Args:
+        name (str):
+
+    Returns:
+
+    References:
+
+    """
+    t0 = time.time()
+    print(f'[{name}] start')
+    yield
+    print(f'[{name}] done in {time.time() - t0:.0f} s')
 
 
 def reduce_mem_usage(df: pd.DataFrame, logger: logging.RootLogger = None,
