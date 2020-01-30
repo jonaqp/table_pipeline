@@ -53,7 +53,7 @@ class Trainer:
             raise NotImplementedError(error_msg)
 
 
-class StratifiedGroupKfold(_BaseKFold):
+class StratifiedGroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups
     combination which also attempts. to evenly distribute the number of each
     classes across each fold.
@@ -74,7 +74,7 @@ class StratifiedGroupKfold(_BaseKFold):
     >>> groups = np.array([3, 0, 3, 0, 3, 3, 2, 0, 1])
     >>> y =      np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
     >>> X =      np.array([1 ,2 ,3 ,4 ,5 ,6 ,6 ,6, 7])
-    >>> sgkf = StratifiedGroupKfold(n_splits=2)
+    >>> sgkf = StratifiedGroupKFold(n_splits=2)
     >>> sgkf.get_n_splits(X, y, groups)
     2
     >>> for train_index, test_index in sgkf.split(X, y, groups):
