@@ -20,17 +20,12 @@ def get_regression_models():
         yield _model
 
 
-def test_trainer_predict():
+@pytest.mark.parametrize("model", list(get_classification_models()))
+def test_trainer_predict(model):
     from sklearn.datasets import load_wine
     x, y = load_wine(True)
 
-    trainer = Trainer(LGBMClassifier())
-    trainer.train(train=x, target=y)
-    predicts = trainer.predict(x)
-    score = accuracy_score(y, predicts)
-    assert score >= 0.9
-
-    trainer = Trainer(CatBoostClassifier(verbose=0, save_snapshot=False))
+    trainer = Trainer(model)
     trainer.train(train=x, target=y)
     predicts = trainer.predict(x)
     score = accuracy_score(y, predicts)
