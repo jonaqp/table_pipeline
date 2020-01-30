@@ -3,8 +3,8 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from catboost import CatBoost, Pool, CatBoostClassifier
-from lightgbm import LGBMModel, LGBMClassifier
+from catboost import CatBoost, Pool
+from lightgbm import LGBMModel
 from sklearn.model_selection import BaseCrossValidator
 
 TYPE_DATASET = Union[pd.DataFrame, np.ndarray]
@@ -15,7 +15,7 @@ class Trainer:
     def __init__(self, model: Union[LGBMModel, CatBoost]):
         self.model = model
         self.is_catboost = isinstance(model, CatBoost)
-        self.is_classifier = None
+        self.is_classifier = getattr(model, "_estimator_type") == "classifier"
 
     def train(self, train: TYPE_DATASET, target: TYPE_DATASET,
               cat_features: Optional[List[str]] = None):
@@ -35,8 +35,20 @@ class Trainer:
         if self.is_catboost:
             return self.model.predict(test)
         else:
-            return self.model.predict(test,
-                                      num_iteration=self._get_best_iteration())
+            bes_iter = self._get_best_iteration()
+            return self.model.predict(test, num_iteration=bes_iter)
+
+    def predict_proba(self, test: TYPE_DATASET):
+        if self.is_classifier:
+            if self.is_catboost:
+                return self.model.predict_proba(test)
+            else:
+                bes_iter = self._get_best_iteration()
+                return self.model.predict_proba(test, num_iteration=bes_iter)
+        else:
+            error_msg = f"{type(self.model).__name__}" \
+                        f" is not supported predict_proba method."
+            raise NotImplementedError(error_msg)
 
 
 class CrossValidator:
