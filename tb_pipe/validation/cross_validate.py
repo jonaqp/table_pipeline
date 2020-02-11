@@ -2,12 +2,10 @@ from typing import Optional, List
 from typing import Union
 
 import numpy as np
-import pandas as pd
 from catboost import CatBoost, Pool
 from lightgbm import LGBMModel
-from sklearn.model_selection import BaseCrossValidator
 
-TYPE_DATASET = Union[pd.DataFrame, np.ndarray]
+from ..typing_template import TYPE_DATASET, TYPE_CV
 
 
 class Trainer:
@@ -52,7 +50,7 @@ class Trainer:
 
 
 class CrossValidator:
-    def __init__(self, model, cv: BaseCrossValidator):
+    def __init__(self, model, cv: TYPE_CV):
         self.oof = None
         self.predictions = None
         self.cv = cv
