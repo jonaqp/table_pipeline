@@ -32,9 +32,10 @@ class Trainer:
 
     def _get_feature_importance(self):
         if self.is_catboost:
-            self.model.get_feature_importance()
+            return self.model.get_feature_importance()
         else:
-            self.model.feature_importance()
+            # LGBMClassifier, LGBMRegressor
+            return self.model.feature_importances_
 
     def predict(self, test: TYPE_DATASET):
         if self.is_catboost:
