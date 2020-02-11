@@ -1,8 +1,9 @@
-from typing import Optional, List
-from typing import Union
+from typing import Optional, List, Union, Callable
 
 import numpy as np
+import pandas as pd
 from catboost import CatBoost, Pool
+from category_encoders.utils import convert_input, convert_input_vector
 from lightgbm import LGBMModel
 
 from ..typing_template import TYPE_DATASET, TYPE_CV
@@ -50,21 +51,41 @@ class Trainer:
 
 
 class CrossValidator:
-    def __init__(self, model, cv: TYPE_CV):
+    def __init__(self, trainer: Trainer, cv: TYPE_CV,
+                 scoring: Optional[Callable] = None):
         self.oof = None
         self.predictions = None
         self.cv = cv
-        self.model = model
+        self.trainer = trainer
+        self.scoring = scoring
 
     def run(self, train: TYPE_DATASET, test: TYPE_DATASET,
-            target: TYPE_DATASET, verbose: bool = True):
-        self.oof = np.zeros(len(train))
-        self.predictions = np.zeros(len(test))
+            target: TYPE_DATASET,
+            groups: Optional[pd.Series] = None,
+            verbose: bool = True):
+        train = convert_input(train)
+        target = convert_input_vector(target, train.index)
 
-        for idx, (trn_idx, val_idx) in enumerate(self.cv.split(train, target)):
+        if test is not None:
+            test = convert_input(test)
+            self.predictions = np.zeros(len(test))
+        self.oof = np.zeros(len(train))
+
+        scores = []
+        for idx, (trn_idx, val_idx) in enumerate(
+            self.cv.split(train, target, groups)):
             if verbose:
                 print('Fold: {}/{}'.format(idx + 1, self.cv.n_splits))
                 print('Length train: {} / valid: {}'.format(len(trn_idx),
                                                             len(val_idx)))
             train_x, train_y = train.iloc[trn_idx], target.iloc[trn_idx]
             valid_x, valid_y = train.iloc[val_idx], target.iloc[val_idx]
+
+            self.trainer.train(train_x, train_y)
+
+            self.oof[val_idx] = self.trainer.predict(valid_x)
+            if test is not None:
+                self.predictions += self.trainer.predict(test)
+            if self.scoring is not None:
+                score = self.scoring(valid_y, self.oof[val_idx])
+                scores.append(score)
