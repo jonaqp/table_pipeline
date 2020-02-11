@@ -1,4 +1,5 @@
-from typing import Optional, List, Union, Callable
+from copy import copy
+from typing import Optional, List, Union, Callable, Dict, Any
 
 import numpy as np
 import pandas as pd
@@ -16,13 +17,41 @@ class Trainer:
         self.is_catboost = isinstance(model, CatBoost)
         self.is_classifier = getattr(model, "_estimator_type") == "classifier"
 
-    def train(self, train: TYPE_DATASET, target: TYPE_DATASET,
+    def train(self,
+              train_x: TYPE_DATASET, train_y: TYPE_DATASET,
+              valid_x: Optional[TYPE_DATASET] = None,
+              valid_y: Optional[TYPE_DATASET] = None,
+              fit_params: Optional[Union[Dict[str, Any], Callable]] = None,
               cat_features: Optional[List[str]] = None):
-        if self.is_catboost:
-            trn_data = Pool(train, label=target, cat_features=cat_features)
-            self.model.fit(X=trn_data)
+        if fit_params is None:
+            _fit_params = {}
         else:
-            self.model.fit(X=train, y=target)
+            _fit_params = copy(fit_params)
+
+        is_valid_training = valid_x is None and valid_y is None
+        if self.is_catboost:
+            trn_data = Pool(train_x, label=train_y, cat_features=cat_features)
+            if is_valid_training:
+                self.model.fit(X=trn_data)
+            else:
+                val_data = Pool(valid_x, label=valid_y,
+                                cat_features=cat_features)
+                self.__set_fit_params(_fit_params, val_data)
+                self.model.fit(X=trn_data, **_fit_params)
+        else:
+            if is_valid_training:
+                self.model.fit(X=train_x, y=train_y)
+            else:
+                self.__set_fit_params(_fit_params, [(valid_x, valid_y)])
+                self.model.fit(X=train_x, y=train_y, **_fit_params)
+
+    @staticmethod
+    def __set_fit_params(fit_params, valid_data):
+        if "eval_set" not in fit_params:
+            fit_params["eval_set"] = valid_data
+        if "early_stopping_rounds" not in fit_params:
+            fit_params["early_stopping_rounds"] = 100
+        return fit_params
 
     def _get_best_iteration(self):
         if self.is_catboost:
