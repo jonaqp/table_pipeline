@@ -30,6 +30,12 @@ class Trainer:
         else:
             return self.model.best_iteration_
 
+    def _get_feature_importance(self):
+        if self.is_catboost:
+            self.model.get_feature_importance()
+        else:
+            self.model.feature_importance()
+
     def predict(self, test: TYPE_DATASET):
         if self.is_catboost:
             return self.model.predict(test)
