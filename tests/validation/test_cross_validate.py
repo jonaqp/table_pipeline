@@ -2,6 +2,7 @@ import pytest
 from catboost import CatBoostClassifier, CatBoostRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 from tb_pipe.validation.cross_validate import Trainer
 
@@ -31,6 +32,14 @@ def test_trainer_predict(model):
     score = accuracy_score(y, predicts)
     assert score >= 0.9
 
+    tr_x, val_x, tr_y, val_y = train_test_split(x, y)
+    trainer.train(train_x=x, train_y=y,
+                  valid_x=val_x, valid_y=val_y)
+
+    predicts = trainer.predict(x)
+    score = accuracy_score(y, predicts)
+    assert score >= 0.9
+
 
 @pytest.mark.parametrize("model", list(get_classification_models()))
 def test_trainer_predict_proba(model):
@@ -41,6 +50,14 @@ def test_trainer_predict_proba(model):
     trainer.train(train_x=x, train_y=y)
     predicts = trainer.predict_proba(x)
     predicts = np.argmax(predicts, axis=1)
+    score = accuracy_score(y, predicts)
+    assert score >= 0.9
+
+    tr_x, val_x, tr_y, val_y = train_test_split(x, y)
+    trainer.train(train_x=x, train_y=y,
+                  valid_x=val_x, valid_y=val_y)
+
+    predicts = trainer.predict(x)
     score = accuracy_score(y, predicts)
     assert score >= 0.9
 
