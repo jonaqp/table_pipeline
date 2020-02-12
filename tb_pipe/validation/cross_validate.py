@@ -28,22 +28,18 @@ class Trainer:
         else:
             _fit_params = copy(fit_params)
 
-        is_valid_training = valid_x is None and valid_y is None
+        is_valid_training = valid_x is not None and valid_y is not None
         if self.is_catboost:
             trn_data = Pool(train_x, label=train_y, cat_features=cat_features)
             if is_valid_training:
-                self.model.fit(X=trn_data)
-            else:
                 val_data = Pool(valid_x, label=valid_y,
                                 cat_features=cat_features)
                 self.__set_fit_params(_fit_params, val_data)
-                self.model.fit(X=trn_data, **_fit_params)
+            self.model.fit(X=trn_data, **_fit_params)
         else:
             if is_valid_training:
-                self.model.fit(X=train_x, y=train_y)
-            else:
                 self.__set_fit_params(_fit_params, [(valid_x, valid_y)])
-                self.model.fit(X=train_x, y=train_y, **_fit_params)
+            self.model.fit(X=train_x, y=train_y, **_fit_params)
 
     @staticmethod
     def __set_fit_params(fit_params, valid_data):
