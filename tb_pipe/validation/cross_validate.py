@@ -55,7 +55,7 @@ class Trainer:
         else:
             return self.model.best_iteration_
 
-    def _get_feature_importance(self):
+    def get_feature_importance(self):
         if self.is_catboost:
             return self.model.get_feature_importance()
         else:
