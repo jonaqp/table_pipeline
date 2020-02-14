@@ -1,7 +1,8 @@
+import numpy as np
 import pytest
 from catboost import CatBoostClassifier, CatBoostRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 
@@ -32,9 +33,9 @@ def test_classification_run(model):
     n_splits = 2
     kf = KFold(n_splits)
     tr_x, val_x, tr_y, val_y = train_test_split(x, y)
-    oof, predictions, feature_imp = run(trainer, tr_x, val_x, tr_y,
-                                        scoring=accuracy_score, cv=kf)
+    oof, predictions, feature_imp = run(trainer, tr_x, val_x, tr_y, cv=kf)
     assert len(oof) == len(tr_x)
+    assert oof.shape[1] == len(np.unique(y))
     assert len(predictions) == len(val_y)
 
 
