@@ -55,7 +55,7 @@ class Trainer:
         else:
             return self.model.best_iteration_
 
-    def _get_feature_importance(self):
+    def get_feature_importance(self):
         if self.is_catboost:
             return self.model.get_feature_importance()
         else:
@@ -66,16 +66,16 @@ class Trainer:
         if self.is_catboost:
             return self.model.predict(test)
         else:
-            bes_iter = self._get_best_iteration()
-            return self.model.predict(test, num_iteration=bes_iter)
+            best_iter = self._get_best_iteration()
+            return self.model.predict(test, num_iteration=best_iter)
 
     def predict_proba(self, test: TYPE_DATASET):
         if self.is_classifier:
             if self.is_catboost:
                 return self.model.predict_proba(test)
             else:
-                bes_iter = self._get_best_iteration()
-                return self.model.predict_proba(test, num_iteration=bes_iter)
+                best_iter = self._get_best_iteration()
+                return self.model.predict_proba(test, num_iteration=best_iter)
         else:
             error_msg = f"{type(self.model).__name__}" \
                         f" is not supported predict_proba method."
