@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from logging import getLogger
 from typing import Optional, Callable
 
@@ -16,11 +17,15 @@ def run(trainer: Trainer,
         test: Optional[TYPE_DATASET] = None,
         target: Optional[TYPE_DATASET] = None,
         scoring: Optional[Callable] = None,
+        thresh_func: Optional[Callable] = None,
         cv: TYPE_CV = None,
         groups: Optional[pd.Series] = None,
-        logger: Optional[logging.RootLogger] = None):
+        logger: Optional[logging.RootLogger] = None
+        ):
     if logger is None:
         logger = getLogger(__name__)
+    if thresh_func is None:
+        thresh_func = partial(np.argmax, axis=1)
     train, target, groups = indexable(train, target, groups)
 
     train = convert_input(train)
@@ -41,10 +46,19 @@ def run(trainer: Trainer,
         valid_x, valid_y = train.iloc[val_idx], target.iloc[val_idx]
 
         trainer.train(train_x, train_y)
-
-        oof[val_idx] = trainer.predict(valid_x)
+        if trainer.is_classifier:
+            pred_valid = trainer.predict_proba(valid_x)
+            pred_valid = thresh_func(pred_valid)
+        else:
+            pred_valid = trainer.predict(valid_x)
+        oof[val_idx] = pred_valid
         if test is not None:
-            predictions += trainer.predict(test)
+            if trainer.is_classifier:
+                pred_test = trainer.predict_proba(test)
+                pred_test = thresh_func(pred_test)
+            else:
+                pred_test = trainer.predict(test)
+            predictions += pred_test
         if scoring is not None:
             score = scoring(valid_y, oof[val_idx])
             logger.info("Fold {} Score: {}".format(idx, score))
