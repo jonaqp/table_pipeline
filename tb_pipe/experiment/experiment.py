@@ -1,11 +1,11 @@
 import logging
-from functools import partial
 from logging import getLogger
 from typing import Optional, Callable
 
 import numpy as np
 import pandas as pd
 from category_encoders.utils import convert_input, convert_input_vector
+from sklearn.utils import multiclass
 from sklearn.utils.validation import indexable
 
 from ..typing_template import TYPE_DATASET, TYPE_CV
@@ -17,24 +17,30 @@ def run(trainer: Trainer,
         test: Optional[TYPE_DATASET] = None,
         target: Optional[TYPE_DATASET] = None,
         scoring: Optional[Callable] = None,
-        thresh_func: Optional[Callable] = None,
         cv: TYPE_CV = None,
         groups: Optional[pd.Series] = None,
-        logger: Optional[logging.RootLogger] = None
+        logger: Optional[logging.RootLogger] = None,
+        type_of_target: str = 'auto'
         ):
     if logger is None:
         logger = getLogger(__name__)
-    if thresh_func is None:
-        thresh_func = partial(np.argmax, axis=1)
     train, target, groups = indexable(train, target, groups)
 
     train = convert_input(train)
     target = convert_input_vector(target, train.index)
     predictions = None
+
+    n_output_cols = 1
+    if type_of_target == 'auto':
+        type_of_target = multiclass.type_of_target(target)
+    if type_of_target == 'multiclass':
+        n_output_cols = target.nunique(dropna=True)
+    oof = np.zeros((len(train), n_output_cols)) \
+        if n_output_cols > 1 else np.zeros(len(train))
     if test is not None:
         test = convert_input(test)
-        predictions = np.zeros(len(test))
-    oof = np.zeros(len(train))
+        predictions = np.zeros((len(test), n_output_cols)) \
+            if n_output_cols > 1 else np.zeros(len(test))
 
     feature_importance = []
     scores = []
@@ -48,14 +54,12 @@ def run(trainer: Trainer,
         trainer.train(train_x, train_y)
         if trainer.is_classifier:
             pred_valid = trainer.predict_proba(valid_x)
-            pred_valid = thresh_func(pred_valid)
         else:
             pred_valid = trainer.predict(valid_x)
         oof[val_idx] = pred_valid
         if test is not None:
             if trainer.is_classifier:
                 pred_test = trainer.predict_proba(test)
-                pred_test = thresh_func(pred_test)
             else:
                 pred_test = trainer.predict(test)
             predictions += pred_test
